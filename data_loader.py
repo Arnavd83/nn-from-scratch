@@ -30,6 +30,8 @@ else:
 
 
 ### LOAD MNIST DATASET FROM IDX FILES ###
+# The following code is from the kaagle website
+# Turn the images from raw byte data to data that is actually usable for the nueral network 
 
 def load_images(file_path):
     with open(file_path, 'rb') as f:
@@ -47,10 +49,10 @@ def load_labels(file_path):
 
 
 def load_mnist(data_dir='data'):
-    train_images = load_images(os.path.join(data_dir, 'train-images-idx3-ubyte'))
-    train_labels = load_labels(os.path.join(data_dir, 'train-labels-idx1-ubyte'))
-    test_images = load_images(os.path.join(data_dir, 't10k-images-idx3-ubyte'))
-    test_labels = load_labels(os.path.join(data_dir, 't10k-labels-idx1-ubyte'))
+    train_images = load_images(os.path.join(data_dir, 'train-images.idx3-ubyte'))
+    train_labels = load_labels(os.path.join(data_dir, 'train-labels.idx1-ubyte'))
+    test_images = load_images(os.path.join(data_dir, 't10k-images.idx3-ubyte'))
+    test_labels = load_labels(os.path.join(data_dir, 't10k-labels.idx1-ubyte'))
     return train_images, train_labels, test_images, test_labels
 
 

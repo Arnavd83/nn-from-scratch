@@ -3,6 +3,9 @@ import pandas as pd
 import os
 from data_loader import load_mnist
 from activiation_functions import ActiviationFunctions
+from loss_functions import LossFunctions
+
+# Neural Network Project gang gang gang gang gang
 
 class NeuralNetwork:
     def __init__(self, input_size, hidden_size, output_size):
@@ -13,7 +16,7 @@ class NeuralNetwork:
         self.test_images = None
         self.test_labels = None
 
-        # Network architecrure paramters (1 hidden layer)
+        # Network architecrure paramters (1 hidden layer )
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
@@ -79,46 +82,39 @@ class NeuralNetwork:
         one_hot[np.arange(n_samples), labels] = 1
         return one_hot
 
-    def _sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
-        
-    def _sigmoid_derivative(self, x):
-        return x * (1 - x)
-        
-    def _relu(self, x):
-        return np.maximum(0, x)
-        
-    def _relu_derivative(self, x):
-        return np.where(x > 0, 1, 0)
-        
-    def _softmax(self, x):
-        exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))
-        return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+    # Given the wieghts/biases and input X compute the output of the network
+    def _forward_propagation(self, X):
+        # Initialize the activation function
+        act_func = ActiviationFunctions('relu')
+        # Compute the output of the network
+        pre_activation_hidden = np.dot(X, self.weights['hidden']) + self.biases['hidden']
+        hidden_layer = act_func.activation(pre_activation_hidden)
+        pre_activation_output = np.dot(hidden_layer, self.weights['output']) + self.biases['output']
+        output_layer = ActiviationFunctions('softmax').activation(pre_activation_output)
+        return output_layer
 
-    def forward_propagation(self, X):
-        """
-        Perform forward propagation through the network.
+    # Find the cross entropy loss of the network prediction compared to the expected output
+    # MIGHT WANT TO TEST ON MULTIPLE ERROR FUNCTIONS
+    def error_calculation(self, y_pred, y_true):
+        # Validate that y_pred is a valid probability distribution (sums to 1 for each sample)
+        row_sums = np.sum(y_pred, axis=1)
+        if not np.allclose(row_sums, 1.0, rtol=1e-5, atol=1e-5):
+            raise ValueError(f"Predicted values do not form valid probability distributions. Row sums: {row_sums}")
         
-        Args:
-            X: Input data of shape (batch_size, input_size)
+        # Validate that y_true is one-hot encoded (each row has exactly one 1 and the rest 0s)
+        row_sums_true = np.sum(y_true, axis=1)
+        if not np.allclose(row_sums_true, 1.0, rtol=1e-5, atol=1e-5):
+            raise ValueError("True labels are not in one-hot encoding format (each row should sum to 1)")
             
-        Returns:
-            output: Network output after forward pass
-        """
-        # Input to hidden layer
-        self.hidden_layer_input = np.dot(X, self.weights['hidden']) + self.biases['hidden']
-        self.hidden_layer_output = self._relu(self.hidden_layer_input)
+        if not np.all(np.logical_or(np.isclose(y_true, 0.0), np.isclose(y_true, 1.0))):
+            raise ValueError("True labels are not in one-hot encoding format (values should be 0 or 1)")
         
-        # Hidden to output layer
-        self.output_layer_input = np.dot(self.hidden_layer_output, self.weights['output']) + self.biases['output']
-        self.output = self._softmax(self.output_layer_input)
-        
-        return self.output
+        return LossFunctions.cross_entropy(y_pred, y_true)
 
 
 # Example usage
 if __name__ == '__main__':
-    nn = NeuralNetwork()
+    nn = NeuralNetwork(784, 256, 10)
     nn.load_mnist_data()
     
 

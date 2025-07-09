@@ -43,23 +43,23 @@ class NeuralNetwork:
     
     # Forward pass: Given set weight values and a batch of inputs find a corresponding batch of outputs
     def forward_pass(self, X):
-        # X represents a batch on n inputs - dimensions: 784 by n
+        # X represents a batch on n inputs - dimensions: batch_size by inpute_features (784)
         
         # Find hidden layer:
         # z = XW + b
         # a = f(z)
-        z_hidden = X @ self.weights['hidden'] + self.biases['hidden']
-        a_hidden = ActiviationFunctions('relu').activation(z_hidden)
+        z_hidden = X @ self.weights['hidden'] + self.biases['hidden'] # (batch_size by hidden_size)
+        a_hidden = ActiviationFunctions('relu').activation(z_hidden) # (batch_size by hidden_size)
         
         # Store in cache
-        self.cache['hidden']['z'] = z_hidden
+        self.cache['hidden']['z'] = z_hidden 
         self.cache['hidden']['a'] = a_hidden
         
         # Find output layer:
         # z = aW + b
         # a = f(z)
-        z_output = a_hidden @ self.weights['output'] + self.biases['output']
-        a_output = ActiviationFunctions('softmax').activation(z_output)
+        z_output = a_hidden @ self.weights['output'] + self.biases['output'] # (batch_size by output_size)
+        a_output = ActiviationFunctions('softmax').activation(z_output) # (batch_size by output_size)
         
         # Store in cache
         self.cache['output']['z'] = z_output
@@ -72,7 +72,40 @@ class NeuralNetwork:
     # Given a batch of predicted outputs and true outputs calculate the error using a loss function
     def calculate_error(self, prediction, targets):
         # Use the vectorized cross_entropy function that handles batches directly
-        return LossFunctions.cross_entropy(prediction, targets)
+        loss = LossFunctions.cross_entropy(prediction, targets)
+        return loss
+
+    
+    # The goal of backpropagation if to find the gradient of the loss with respect to the weights and biases
+    def backpropagation(self, X, y):
+        ''' The math:
+        For the output layer weights and biases: 
+        dL/dW_out = dL/dA_out * dA_out/dZ_out * dZ_out/dW_out
+        dL/dB_out = dL/dA_out * dA_out/dZ_out * dZ_out/dB_out
+
+        For the hidden layer wieghts and biases:
+        dL/dW_hidden = dL/dA_hidden * dA_hidden/dZ_hidden * dZ_hidden/dW_hidden
+        dL/dB_hidden = dL/dA_hidden * dA_hidden/dZ_hidden * dZ_hidden/dB_hidden
+            dL/DA_hidden = dL/dZ_out * dZ_out/DA_hidden
+            dZ_out/DA_hidden = W_out because Z_out = A_hidden * W_out
+            dL/dZ_out will be solved for in the earlier in the backpropogation steps
+
+        '''
+        # Find dL/dW_out
+        dL_dAout = LossFunctions.cross_entropy_derivative(self.cache['output']['a'], y) # (batch_size, output_size)
+        dAout_dZout = ActiviationFunctions('softmax').activation_derivative(self.cache['output']['z']) # (batch_size, output_size)
+        # Use element wise multiplication because each node must remail its own entity in dL/dZ_out
+        dL_dZout = dL_dAout * dAout_dZout # (batch_size, output_size)
+        dZout_dWout = self.cache['hidden']['a'].T # (hidden_size, batch_size)
+        dL_dWout = dL_dZout @ dZout_dWout # (output_size, hidden_size) -> this makes sense because Wout has dimenstions (output_size, hidden_size) 
+        dL_dBout = np.sum(dL_dZout, axis=0) # (output_size,)
+
+
+        
+
+        
+        
+
 
         
 

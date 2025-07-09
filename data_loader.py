@@ -56,9 +56,72 @@ def load_mnist(data_dir='data'):
     return train_images, train_labels, test_images, test_labels
 
 
+class DataLoader:
+    def __init__(self):
+        # Data variables
+        self.train_images = None
+        self.train_labels = None
+        self.val_images = None
+        self.val_labels = None
+        self.test_images = None
+        self.test_labels = None
+    
+    def load_mnist_data(self):
+        # Load the data using the data_loader module
+        train_images, train_labels, test_images, test_labels = load_mnist()
+        
+        ### DATA PREPROCESSING ###
+        
+        # Store the test data in class variables
+        self.test_images = test_images
+        self.test_labels = test_labels
+        
+        # Split training set into training (80%) and validation (20%) sets
+        np.random.seed(42)  # For reproducibility
+        n_train = len(train_images)
+        indices = np.random.permutation(n_train)
+        train_size = int(0.8 * n_train)
+        
+        train_indices = indices[:train_size]
+        val_indices = indices[train_size:]
+        
+        self.train_images = train_images[train_indices]
+        self.train_labels = train_labels[train_indices]
+        self.val_images = train_images[val_indices]
+        self.val_labels = train_labels[val_indices]
+        
+        # Normalize the image data (0-255 to 0-1)
+        self.train_images = self.train_images.astype('float32') / 255
+        self.val_images = self.val_images.astype('float32') / 255
+        self.test_images = self.test_images.astype('float32') / 255
+        
+        # Flatten the images from 28x28 to 784-dimensional vectors
+        self.train_images = self.train_images.reshape(-1, 28*28)
+        self.val_images = self.val_images.reshape(-1, 28*28)
+        self.test_images = self.test_images.reshape(-1, 28*28)
+        
+        # Convert labels to one-hot encoding
+        self.train_labels = self._one_hot_encode(self.train_labels)
+        self.val_labels = self._one_hot_encode(self.val_labels)
+        self.test_labels = self._one_hot_encode(self.test_labels)
+        
+        return self.train_images, self.train_labels, self.val_images, self.val_labels, self.test_images, self.test_labels
+    
+    def _one_hot_encode(self, labels):
+        """Convert labels to one-hot encoding"""
+        n_samples = len(labels)
+        n_classes = 10  # MNIST has 10 classes (0-9)
+        one_hot = np.zeros((n_samples, n_classes))
+        one_hot[np.arange(n_samples), labels] = 1
+        return one_hot
+
+
 if __name__ == '__main__':
-    tr_imgs, tr_lbls, te_imgs, te_lbls = load_mnist()
-    print('Train images:', tr_imgs.shape)
-    print('Train labels:', tr_lbls.shape)
-    print('Test images:', te_imgs.shape)
-    print('Test labels:', te_lbls.shape)
+    data_loader = DataLoader()
+    train_images, train_labels, val_images, val_labels, test_images, test_labels = data_loader.load_mnist_data()
+    print('Train images:', train_images.shape)
+    print('Train labels:', train_labels.shape)
+    print('Val images:', val_images.shape)
+    print('Val labels:', val_labels.shape)
+    print('Test images:', test_images.shape)
+    print('Test labels:', test_labels.shape)
